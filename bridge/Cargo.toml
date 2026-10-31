@@ -1,0 +1,17 @@
+[package]
+name = "serverdeck-bridge"
+version = "1.0.0"
+edition = "2021"
+authors = ["Andrea Ronzoni"]
+description = "Lightweight native host bridge daemon for ServerDeck homelab monitoring"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

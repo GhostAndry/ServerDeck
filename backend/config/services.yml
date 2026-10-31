@@ -1,0 +1,18 @@
+services:
+  - id: portainer
+    name: Portainer
+    url: https://srv-01:9443
+    icon: shippingbox.fill
+    category: Management
+
+  - id: beszel
+    name: Beszel
+    url: http://srv-01:8090
+    icon: chart.xyaxis.line
+    category: Monitoring
+
+  - id: license-manager
+    name: License Manager
+    url: http://srv-01:3001
+    icon: key.fill
+    category: Apps

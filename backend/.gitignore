@@ -1,0 +1,4 @@
+serverdeck
+*.exe
+*.test
+data/

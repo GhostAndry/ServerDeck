@@ -1,0 +1,19 @@
+[Unit]
+Description=ServerDeck Native Host Bridge Daemon
+Documentation=https://github.com/serverdeck
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/local/bin/serverdeck-bridge --socket /run/serverdeck/bridge.sock
+Restart=always
+RestartSec=3
+RuntimeDirectory=serverdeck
+RuntimeDirectoryMode=0755
+KillMode=process
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

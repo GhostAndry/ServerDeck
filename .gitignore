@@ -1,0 +1,35 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Xcode & Swift
+*.xcuserstate
+project.xcworkspace/xcuserdata/
+*.xcuserdatad/
+xcuserdata/
+DerivedData/
+.build/
+*.build/
+*.xcodeproj/xcuserdata/
+
+# Rust / Cargo
+target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# Go
+bin/
+*.exe
+*.test
+*.out
+*.prof
+
+# ServerDeck runtime data & secrets
+data/
+*.db
+*.db-journal
+*.log
+.env
+.env.local

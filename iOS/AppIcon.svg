@@ -1,0 +1,366 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#152136"/>
+      <stop offset="55%" stop-color="#0B0F19"/>
+      <stop offset="100%" stop-color="#04060A"/>
+    </radialGradient>
+
+    <!-- Ambient Center Cyan Glow (Enlarged) -->
+    <radialGradient id="ambientGlow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.32"/>
+      <stop offset="40%" stop-color="#3B82F6" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#0B0F19" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Server Blade Metal Gradient -->
+    <linearGradient id="bladeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2A3852"/>
+      <stop offset="10%" stop-color="#1E273A"/>
+      <stop offset="90%" stop-color="#131826"/>
+      <stop offset="100%" stop-color="#0D111C"/>
+    </linearGradient>
+
+    <!-- Blade Border Highlight Gradient -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#718096" stop-opacity="0.85"/>
+      <stop offset="45%" stop-color="#3B4961" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#1E293B" stop-opacity="0.35"/>
+    </linearGradient>
+
+    <!-- Top Glass Sheen Gradient -->
+    <linearGradient id="topSheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.14"/>
+      <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </linearGradient>
+
+    <!-- Telemetry Pulse Gradient -->
+    <linearGradient id="pulseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.15"/>
+      <stop offset="20%" stop-color="#00F0FF" stop-opacity="0.95"/>
+      <stop offset="50%" stop-color="#38BDF8" stop-opacity="1"/>
+      <stop offset="80%" stop-color="#00F0FF" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#06B6D4" stop-opacity="0.15"/>
+    </linearGradient>
+
+    <!-- LED Gradients -->
+    <radialGradient id="cyanLedGrad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#EBF9FF"/>
+      <stop offset="45%" stop-color="#00F0FF"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </radialGradient>
+
+    <radialGradient id="greenLedGrad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#EFFFF9"/>
+      <stop offset="45%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </radialGradient>
+
+    <!-- Filters -->
+    <filter id="dropShadowBlade" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="20" stdDeviation="20" flood-color="#000000" flood-opacity="0.75"/>
+    </filter>
+
+    <filter id="glowCyan" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="24" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="glowPulse" x="-30%" y="-70%" width="160%" height="240%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 1. Background -->
+  <rect width="1024" height="1024" fill="url(#bgGrad)"/>
+
+  <!-- 2. Subtle Cyberpunk Grid Lines -->
+  <g stroke="#38BDF8" stroke-width="1.2" stroke-opacity="0.04">
+    <line x1="96" y1="0" x2="96" y2="1024"/>
+    <line x1="224" y1="0" x2="224" y2="1024"/>
+    <line x1="352" y1="0" x2="352" y2="1024"/>
+    <line x1="480" y1="0" x2="480" y2="1024"/>
+    <line x1="608" y1="0" x2="608" y2="1024"/>
+    <line x1="736" y1="0" x2="736" y2="1024"/>
+    <line x1="864" y1="0" x2="864" y2="1024"/>
+
+    <line x1="0" y1="96" x2="1024" y2="96"/>
+    <line x1="0" y1="224" x2="1024" y2="224"/>
+    <line x1="0" y1="352" x2="1024" y2="352"/>
+    <line x1="0" y1="480" x2="1024" y2="480"/>
+    <line x1="0" y1="608" x2="1024" y2="608"/>
+    <line x1="0" y1="736" x2="1024" y2="736"/>
+    <line x1="0" y1="864" x2="1024" y2="864"/>
+  </g>
+
+  <!-- 3. Ambient Center Glow -->
+  <circle cx="512" cy="505" r="480" fill="url(#ambientGlow)"/>
+
+  <!-- 4. ENLARGED SERVER DECK (Width: 816, Height: 142 each. Blades at Y: 236, 424, 612) -->
+  
+  <!-- BLADE 1 (Top) -->
+  <g filter="url(#dropShadowBlade)">
+    <rect x="104" y="236" width="816" height="142" rx="26" fill="url(#bladeGrad)" stroke="url(#borderGrad)" stroke-width="2.5"/>
+    <rect x="108" y="238" width="808" height="2.5" rx="1.5" fill="#FFFFFF" fill-opacity="0.2"/>
+    
+    <!-- Status LEDs (Larger, more vibrant) -->
+    <circle cx="162" cy="307" r="18" fill="#00F0FF" fill-opacity="0.4" filter="url(#glowCyan)"/>
+    <circle cx="162" cy="307" r="9.5" fill="url(#cyanLedGrad)"/>
+    <circle cx="198" cy="307" r="6.5" fill="#38BDF8" fill-opacity="0.85"/>
+    
+    <!-- Divider -->
+    <line x1="230" y1="264" x2="230" y2="350" stroke="#334155" stroke-width="2.5"/>
+
+    <!-- High-Density Ventilation Grille -->
+    <g fill="#070A11">
+      <rect x="260" y="274" width="34" height="8" rx="4"/>
+      <rect x="260" y="295" width="34" height="8" rx="4"/>
+      <rect x="260" y="316" width="34" height="8" rx="4"/>
+      <rect x="260" y="337" width="34" height="8" rx="4"/>
+
+      <rect x="310" y="274" width="34" height="8" rx="4"/>
+      <rect x="310" y="295" width="34" height="8" rx="4"/>
+      <rect x="310" y="316" width="34" height="8" rx="4"/>
+      <rect x="310" y="337" width="34" height="8" rx="4"/>
+
+      <rect x="360" y="274" width="34" height="8" rx="4"/>
+      <rect x="360" y="295" width="34" height="8" rx="4"/>
+      <rect x="360" y="316" width="34" height="8" rx="4"/>
+      <rect x="360" y="337" width="34" height="8" rx="4"/>
+
+      <rect x="410" y="274" width="34" height="8" rx="4"/>
+      <rect x="410" y="295" width="34" height="8" rx="4"/>
+      <rect x="410" y="316" width="34" height="8" rx="4"/>
+      <rect x="410" y="337" width="34" height="8" rx="4"/>
+
+      <rect x="460" y="274" width="34" height="8" rx="4"/>
+      <rect x="460" y="295" width="34" height="8" rx="4"/>
+      <rect x="460" y="316" width="34" height="8" rx="4"/>
+      <rect x="460" y="337" width="34" height="8" rx="4"/>
+
+      <rect x="510" y="274" width="34" height="8" rx="4"/>
+      <rect x="510" y="295" width="34" height="8" rx="4"/>
+      <rect x="510" y="316" width="34" height="8" rx="4"/>
+      <rect x="510" y="337" width="34" height="8" rx="4"/>
+
+      <rect x="560" y="274" width="34" height="8" rx="4"/>
+      <rect x="560" y="295" width="34" height="8" rx="4"/>
+      <rect x="560" y="316" width="34" height="8" rx="4"/>
+      <rect x="560" y="337" width="34" height="8" rx="4"/>
+
+      <rect x="610" y="274" width="34" height="8" rx="4"/>
+      <rect x="610" y="295" width="34" height="8" rx="4"/>
+      <rect x="610" y="316" width="34" height="8" rx="4"/>
+      <rect x="610" y="337" width="34" height="8" rx="4"/>
+
+      <rect x="660" y="274" width="34" height="8" rx="4"/>
+      <rect x="660" y="295" width="34" height="8" rx="4"/>
+      <rect x="660" y="316" width="34" height="8" rx="4"/>
+      <rect x="660" y="337" width="34" height="8" rx="4"/>
+
+      <rect x="710" y="274" width="34" height="8" rx="4"/>
+      <rect x="710" y="295" width="34" height="8" rx="4"/>
+      <rect x="710" y="316" width="34" height="8" rx="4"/>
+      <rect x="710" y="337" width="34" height="8" rx="4"/>
+
+      <rect x="760" y="274" width="34" height="8" rx="4"/>
+      <rect x="760" y="295" width="34" height="8" rx="4"/>
+      <rect x="760" y="316" width="34" height="8" rx="4"/>
+      <rect x="760" y="337" width="34" height="8" rx="4"/>
+    </g>
+
+    <!-- Right Server Bay Ejector / Lock Handle -->
+    <rect x="830" y="284" width="46" height="46" rx="10" fill="#182337" stroke="#38BDF8" stroke-width="2" stroke-opacity="0.45"/>
+    <circle cx="853" cy="307" r="5.5" fill="#64748B"/>
+  </g>
+
+  <!-- BLADE 2 (Middle) -->
+  <g filter="url(#dropShadowBlade)">
+    <rect x="104" y="424" width="816" height="142" rx="26" fill="url(#bladeGrad)" stroke="url(#borderGrad)" stroke-width="2.5"/>
+    <rect x="108" y="426" width="808" height="2.5" rx="1.5" fill="#FFFFFF" fill-opacity="0.2"/>
+    
+    <!-- Status LEDs -->
+    <circle cx="162" cy="495" r="18" fill="#10B981" fill-opacity="0.4" filter="url(#glowCyan)"/>
+    <circle cx="162" cy="495" r="9.5" fill="url(#greenLedGrad)"/>
+    <circle cx="198" cy="495" r="6.5" fill="#38BDF8" fill-opacity="0.85"/>
+    
+    <!-- Divider -->
+    <line x1="230" y1="452" x2="230" y2="538" stroke="#334155" stroke-width="2.5"/>
+
+    <!-- High-Density Ventilation Grille -->
+    <g fill="#070A11">
+      <rect x="260" y="462" width="34" height="8" rx="4"/>
+      <rect x="260" y="483" width="34" height="8" rx="4"/>
+      <rect x="260" y="504" width="34" height="8" rx="4"/>
+      <rect x="260" y="525" width="34" height="8" rx="4"/>
+
+      <rect x="310" y="462" width="34" height="8" rx="4"/>
+      <rect x="310" y="483" width="34" height="8" rx="4"/>
+      <rect x="310" y="504" width="34" height="8" rx="4"/>
+      <rect x="310" y="525" width="34" height="8" rx="4"/>
+
+      <rect x="360" y="462" width="34" height="8" rx="4"/>
+      <rect x="360" y="483" width="34" height="8" rx="4"/>
+      <rect x="360" y="504" width="34" height="8" rx="4"/>
+      <rect x="360" y="525" width="34" height="8" rx="4"/>
+
+      <rect x="410" y="462" width="34" height="8" rx="4"/>
+      <rect x="410" y="483" width="34" height="8" rx="4"/>
+      <rect x="410" y="504" width="34" height="8" rx="4"/>
+      <rect x="410" y="525" width="34" height="8" rx="4"/>
+
+      <rect x="460" y="462" width="34" height="8" rx="4"/>
+      <rect x="460" y="483" width="34" height="8" rx="4"/>
+      <rect x="460" y="504" width="34" height="8" rx="4"/>
+      <rect x="460" y="525" width="34" height="8" rx="4"/>
+
+      <rect x="510" y="462" width="34" height="8" rx="4"/>
+      <rect x="510" y="483" width="34" height="8" rx="4"/>
+      <rect x="510" y="504" width="34" height="8" rx="4"/>
+      <rect x="510" y="525" width="34" height="8" rx="4"/>
+
+      <rect x="560" y="462" width="34" height="8" rx="4"/>
+      <rect x="560" y="483" width="34" height="8" rx="4"/>
+      <rect x="560" y="504" width="34" height="8" rx="4"/>
+      <rect x="560" y="525" width="34" height="8" rx="4"/>
+
+      <rect x="610" y="462" width="34" height="8" rx="4"/>
+      <rect x="610" y="483" width="34" height="8" rx="4"/>
+      <rect x="610" y="504" width="34" height="8" rx="4"/>
+      <rect x="610" y="525" width="34" height="8" rx="4"/>
+
+      <rect x="660" y="462" width="34" height="8" rx="4"/>
+      <rect x="660" y="483" width="34" height="8" rx="4"/>
+      <rect x="660" y="504" width="34" height="8" rx="4"/>
+      <rect x="660" y="525" width="34" height="8" rx="4"/>
+
+      <rect x="710" y="462" width="34" height="8" rx="4"/>
+      <rect x="710" y="483" width="34" height="8" rx="4"/>
+      <rect x="710" y="504" width="34" height="8" rx="4"/>
+      <rect x="710" y="525" width="34" height="8" rx="4"/>
+
+      <rect x="760" y="462" width="34" height="8" rx="4"/>
+      <rect x="760" y="483" width="34" height="8" rx="4"/>
+      <rect x="760" y="504" width="34" height="8" rx="4"/>
+      <rect x="760" y="525" width="34" height="8" rx="4"/>
+    </g>
+
+    <!-- Right Server Bay Ejector / Lock Handle -->
+    <rect x="830" y="472" width="46" height="46" rx="10" fill="#182337" stroke="#38BDF8" stroke-width="2" stroke-opacity="0.45"/>
+    <circle cx="853" cy="495" r="5.5" fill="#64748B"/>
+  </g>
+
+  <!-- BLADE 3 (Bottom) -->
+  <g filter="url(#dropShadowBlade)">
+    <rect x="104" y="612" width="816" height="142" rx="26" fill="url(#bladeGrad)" stroke="url(#borderGrad)" stroke-width="2.5"/>
+    <rect x="108" y="614" width="808" height="2.5" rx="1.5" fill="#FFFFFF" fill-opacity="0.2"/>
+    
+    <!-- Status LEDs -->
+    <circle cx="162" cy="683" r="18" fill="#00F0FF" fill-opacity="0.4" filter="url(#glowCyan)"/>
+    <circle cx="162" cy="683" r="9.5" fill="url(#cyanLedGrad)"/>
+    <circle cx="198" cy="683" r="6.5" fill="#38BDF8" fill-opacity="0.85"/>
+    
+    <!-- Divider -->
+    <line x1="230" y1="640" x2="230" y2="726" stroke="#334155" stroke-width="2.5"/>
+
+    <!-- High-Density Ventilation Grille -->
+    <g fill="#070A11">
+      <rect x="260" y="650" width="34" height="8" rx="4"/>
+      <rect x="260" y="671" width="34" height="8" rx="4"/>
+      <rect x="260" y="692" width="34" height="8" rx="4"/>
+      <rect x="260" y="713" width="34" height="8" rx="4"/>
+
+      <rect x="310" y="650" width="34" height="8" rx="4"/>
+      <rect x="310" y="671" width="34" height="8" rx="4"/>
+      <rect x="310" y="692" width="34" height="8" rx="4"/>
+      <rect x="310" y="713" width="34" height="8" rx="4"/>
+
+      <rect x="360" y="650" width="34" height="8" rx="4"/>
+      <rect x="360" y="671" width="34" height="8" rx="4"/>
+      <rect x="360" y="692" width="34" height="8" rx="4"/>
+      <rect x="360" y="713" width="34" height="8" rx="4"/>
+
+      <rect x="410" y="650" width="34" height="8" rx="4"/>
+      <rect x="410" y="671" width="34" height="8" rx="4"/>
+      <rect x="410" y="692" width="34" height="8" rx="4"/>
+      <rect x="410" y="713" width="34" height="8" rx="4"/>
+
+      <rect x="460" y="650" width="34" height="8" rx="4"/>
+      <rect x="460" y="671" width="34" height="8" rx="4"/>
+      <rect x="460" y="692" width="34" height="8" rx="4"/>
+      <rect x="460" y="713" width="34" height="8" rx="4"/>
+
+      <rect x="510" y="650" width="34" height="8" rx="4"/>
+      <rect x="510" y="671" width="34" height="8" rx="4"/>
+      <rect x="510" y="692" width="34" height="8" rx="4"/>
+      <rect x="510" y="713" width="34" height="8" rx="4"/>
+
+      <rect x="560" y="650" width="34" height="8" rx="4"/>
+      <rect x="560" y="671" width="34" height="8" rx="4"/>
+      <rect x="560" y="692" width="34" height="8" rx="4"/>
+      <rect x="560" y="713" width="34" height="8" rx="4"/>
+
+      <rect x="610" y="650" width="34" height="8" rx="4"/>
+      <rect x="610" y="671" width="34" height="8" rx="4"/>
+      <rect x="610" y="692" width="34" height="8" rx="4"/>
+      <rect x="610" y="713" width="34" height="8" rx="4"/>
+
+      <rect x="660" y="650" width="34" height="8" rx="4"/>
+      <rect x="660" y="671" width="34" height="8" rx="4"/>
+      <rect x="660" y="692" width="34" height="8" rx="4"/>
+      <rect x="660" y="713" width="34" height="8" rx="4"/>
+
+      <rect x="710" y="650" width="34" height="8" rx="4"/>
+      <rect x="710" y="671" width="34" height="8" rx="4"/>
+      <rect x="710" y="692" width="34" height="8" rx="4"/>
+      <rect x="710" y="713" width="34" height="8" rx="4"/>
+
+      <rect x="760" y="650" width="34" height="8" rx="4"/>
+      <rect x="760" y="671" width="34" height="8" rx="4"/>
+      <rect x="760" y="692" width="34" height="8" rx="4"/>
+      <rect x="760" y="713" width="34" height="8" rx="4"/>
+    </g>
+
+    <!-- Right Server Bay Ejector / Lock Handle -->
+    <rect x="830" y="660" width="46" height="46" rx="10" fill="#182337" stroke="#38BDF8" stroke-width="2" stroke-opacity="0.45"/>
+    <circle cx="853" cy="683" r="5.5" fill="#64748B"/>
+  </g>
+
+  <!-- 5. Central Telemetry / Activity Pulse Wave (Scaled & Enhanced) -->
+  <g filter="url(#glowPulse)">
+    <!-- Cyan Outer Glow Line -->
+    <path d="M 216 495 L 396 495 L 444 438 L 496 564 L 548 418 L 596 524 L 634 495 L 808 495"
+          fill="none"
+          stroke="url(#pulseGrad)"
+          stroke-width="9"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+    
+    <!-- White Inner Core Line -->
+    <path d="M 216 495 L 396 495 L 444 438 L 496 564 L 548 418 L 596 524 L 634 495 L 808 495"
+          fill="none"
+          stroke="#FFFFFF"
+          stroke-width="3.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+  </g>
+
+  <!-- Pulse Peak Nodes -->
+  <circle cx="444" cy="438" r="5.5" fill="#FFFFFF" filter="url(#glowCyan)"/>
+  <circle cx="496" cy="564" r="5.5" fill="#FFFFFF" filter="url(#glowCyan)"/>
+  <circle cx="548" cy="418" r="7" fill="#FFFFFF" filter="url(#glowCyan)"/>
+  <circle cx="596" cy="524" r="5.5" fill="#FFFFFF" filter="url(#glowCyan)"/>
+
+  <!-- 6. Modern Glassmorphism Sheen Overlay -->
+  <rect width="1024" height="512" fill="url(#topSheen)"/>
+</svg>
