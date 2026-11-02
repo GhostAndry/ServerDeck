@@ -1,94 +1,147 @@
 # 🚀 ServerDeck
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Go Version](https://img.shields.io/badge/Go-1.24-00ADD8.svg)](https://go.dev/)
+[![Rust Version](https://img.shields.io/badge/Rust-1.80%2B-DEA584.svg)](https://www.rust-lang.org/)
+[![Swift Version](https://img.shields.io/badge/Swift-6.0-F05138.svg)](https://swift.org/)
+[![Platform](https://img.shields.io/badge/Platform-iOS%2017%2B%20%7C%20Linux-black.svg)]()
+
 > **Il pannello di controllo tascabile del tuo homelab.**  
-> Unisce il monitoraggio hardware, la gestione Docker e la dashboard dei servizi self-hosted in un'unica app nativa iOS (SwiftUI) alimentata da un leggero agent Go su Debian/Linux.
+> Unisce il monitoraggio hardware, la gestione Docker, il terminale shell host interattivo e la dashboard dei servizi self-hosted in un'unica app nativa iOS (SwiftUI) alimentata da un leggero agent Go su Debian/Linux e un micro-bridge nativo in Rust.
 
 ---
 
-## 🏛️ Architettura
+## 🏛️ Architettura (Modello Beszel)
 
 ```
-┌────────────────────────────────────────┐
-│         iPhone (iOS 17+)               │
-│      ServerDeck (SwiftUI Native)       │
-│  Keychain · URLSession · WebSockets    │
-└───────────────────┬────────────────────┘
-                    │
-                    │ HTTPS / Tailscale VPN (privato & sicuro)
-                    ▼
-┌────────────────────────────────────────┐
-│     srv-01 (Debian GNU/Linux)          │
-│                                        │
-│  ┌──────────────────────────────────┐  │
-│  │   serverdeck-backend (Go)        │  │
-│  │   REST API + WebSocket Stream    │  │
-│  │   Token Authentication           │  │
-│  └───────┬──────────────────┬───────┘  │
-│          │                  │          │
-│          ▼                  ▼          │
-│    Docker Engine         Host OS       │
-│  /var/run/docker.sock   /proc, /sys    │
-│  (Containers, Logs,     (CPU, RAM,     │
-│   Stats, Restarts)       Disks, Net)   │
-└────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│  iPhone (iOS 17+ / SwiftUI Nativo)                     │
+│  Keychain · URLSession · WebSockets · Dual-IP Failover │
+└──────────────────────────┬─────────────────────────────┘
+                           │ HTTPS / Tailscale VPN (privato & sicuro)
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│  srv-01 / Docker: serverdeck-backend (Go)              │
+│  • Container 100% NON PRIVILEGIATO                     │
+│  • REST API + WebSocket Stream in tempo reale          │
+│  • Token Constant-Time SHA-256 Authentication          │
+│  • Auto-Discovery porte web dei container Docker       │
+└──────────────────────────┬─────────────────────────────┘
+                           │ UNIX Domain Socket (/run/serverdeck/bridge.sock)
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│  srv-01 Host Linux: serverdeck-bridge (Rust Nativo)    │
+│  • Daemon ultra-leggero systemd (~590 KB, 120 KB RAM)  │
+│  • Esegue comandi shell del Terminale sull'host        │
+│  • Gestione PC: systemctl reboot, shutdown, telemetry  │
+└────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## ✨ Funzionalità
+
+### 📱 1. Client iOS (SwiftUI)
+- **Overview in Tempo Reale:** Gauge animati per carico CPU, memoria RAM, temperature, throughput di rete e stato dei dischi (`/` e volumi dati).
+- **Dual-IP Failover Intelligente:** Prova automaticamente la rete locale LAN (es. `10.0.0.99`) per latenza zero quando sei a casa, con fallback automatico e trasparente su Tailscale (es. `100.x.y.z`) quando sei fuori.
+- **Terminale Shell Interattivo:** Esegui comandi shell direttamente sul server host con cronologia, output monospazio, exit code e tempo di esecuzione in millisecondi. Include chip di scorciatoie rapide per i comandi più frequenti (`uptime`, `free -h`, `df -h`, `sensors`, ecc.).
+- **Gestione PC & Host:** Riavvio e spegnimento del server protetti da dialoghi di doppia conferma e feedback aptico.
+- **Docker Management:** Lista container con raggruppamento per stack Docker Compose, statistiche live (CPU/RAM cgroup, I/O disco/rete), log viewer stile terminale e azioni di avvio, arresto e riavvio.
+- **Docker System Prune:** Recupero spazio su disco con un tocco eliminando container terminati e immagini orfane.
+- **Homepage Servizi Self-Hosted:** Griglia con probe di ping/latenza in tempo reale (Portainer, Beszel, Jellyfin, ecc.) e rilevamento automatico (*auto-discovery*) dei nuovi container con porte web esposte.
+- **Sicurezza & Privacy:** Credenziali memorizzate nel Secure Enclave via iOS Keychain e supporto per sblocco con Face ID / Touch ID.
+
+### ⚙️ 2. Backend Agent (Go) & Host Bridge (Rust)
+- **Agent Go (`backend/`):** Server compatto Go 1.24 che dialoga con la Docker Engine API e gestisce lo streaming WebSocket bidirezionale.
+- **Bridge Rust (`bridge/`):** Demone nativo systemd minimale in Rust che ascolta su socket UNIX locale (`/run/serverdeck/bridge.sock`). Permette al container Go di operare in modo completamente **non privilegiato**, eliminando qualsiasi rischio di container escape.
+- **Hardening di Sicurezza:**
+  - Confronto token in tempo costante con SHA-256 (prevenzione timing e length attacks).
+  - Parametro query `?token=` ristretto solo all'upgrade WebSocket per evitare token leak nei log HTTP.
+  - Protezione SSRF contro endpoint cloud metadata (`169.254.169.254`).
+  - Cap su log tailing (max 2000 righe) contro attacchi DoS da esaurimento memoria.
 
 ---
 
 ## 📁 Struttura del Progetto
 
-- **[`backend/`](backend/)**: Backend agent scritto in **Go**.
-  - REST API per host overview, container Docker, log live e statistiche.
-  - WebSocket per aggiornamenti in tempo reale (host ticks ed eventi container).
-  - Probe HTTP per la dashboard dei servizi (`services.yml`).
-  - Containerizzabile via Docker Compose con accesso minimale e sicuro.
-- **[`ios/`](ios/)**: Applicazione nativa per **iOS** sviluppata in **SwiftUI**.
-  - Dashboard overview con gauge CPU, RAM, dischi (`/` e `/mnt/DATA`), rete.
-  - Gestione container Docker: filtri per stack Compose, statistiche, riavvio/stop/start, viewer log con ricerca live.
-  - Homepage servizi self-hosted (OpenWebUI, Portainer, qBittorrent, ecc.) con ping in tempo reale e quick-launch.
-  - Quick Actions & Emergency Sheet per interventi rapidi fuori casa.
-  - Supporto Face ID e archiviazione sicura delle credenziali nel Keychain iOS.
-- **[`SHARED_SPEC.md`](SHARED_SPEC.md)**: Specifica API e contratti dati condivisi tra backend e client iOS.
+```
+ServerDeck/
+├── backend/              # Agent Go REST + WebSocket server & Docker Compose
+│   ├── cmd/server/main.go
+│   ├── internal/api/     # Routing, handlers, WebSocket hub
+│   ├── internal/auth/    # Middleware di autenticazione e CORS
+│   ├── internal/docker/  # Client Docker Engine API
+│   ├── internal/hostctrl/# Client verso il bridge Rust
+│   ├── internal/metrics/ # Collettore telemetria host
+│   ├── internal/services/# Health check prober e auto-discovery
+│   ├── Dockerfile
+│   └── compose.yml
+├── bridge/               # Daemon nativo Rust (modello Beszel)
+│   ├── Cargo.toml
+│   └── src/main.rs       # Gestore UNIX socket per esecuzione comandi host
+├── ios/                  # Applicazione nativa iOS (SwiftUI)
+│   ├── ServerDeck.xcodeproj
+│   ├── project.yml       # Configurazione XcodeGen
+│   ├── Sources/ServerDeck/
+│   │   ├── Models/       # Modelli dati conformi a SHARED_SPEC.md
+│   │   ├── Services/     # APIClient, WebSocketManager, KeychainService
+│   │   ├── ViewModels/   # Logica di stato e polling
+│   │   └── Views/        # Viste SwiftUI e Terminale Host
+│   └── Tests/            # Test unitari
+├── scripts/              # Script di installazione systemd e asset
+│   ├── install-bridge.sh # Script di installazione automatica del bridge Rust
+│   └── serverdeck-bridge.service
+├── AppIcon.svg           # Icona master vettoriale SVG
+├── SHARED_SPEC.md        # Specifica API condivisa
+└── LICENSE               # Licenza MIT
+```
 
 ---
 
 ## ⚡ Quick Start
 
-### 1. Avviare il Backend (su Debian / srv-01)
+### 1. Avviare il Bridge Rust e il Backend Docker (su Linux / Debian)
 
 ```bash
-cd backend
+# 1. Clona la repository sul tuo server
+git clone https://github.com/GhostAndry/ServerDeck.git /mnt/DATA/serverdeck
+cd /mnt/DATA/serverdeck
 
-# Copia la configurazione d'esempio
-cp config/services.yml.example config/services.yml
+# 2. Compila e installa il bridge host nativo (Rust)
+docker run --rm -v $(pwd)/bridge:/src -w /src rust:alpine cargo build --release
+sudo bash scripts/install-bridge.sh
 
-# Avvia con Docker Compose
+# 3. Configura le variabili d'ambiente (.env)
+cat << 'EOF' > .env
+SERVERDECK_TOKEN=tuo-token-segreto-2026
+EOF
+
+# 4. Avvia il container del backend
 docker compose up -d --build
 ```
 
-Oppure in modalità locale Go (dev/test):
+Verifica che il backend risponda correttamente:
 ```bash
-cd backend
-go run cmd/server/main.go
+curl http://localhost:8080/healthz
+# {"mock":false,"status":"ok","version":"1.0.0"}
 ```
-
-Il backend sarà disponibile su `http://0.0.0.0:8080` (o sul tuo IP Tailscale).
-
-### 2. Configurare l'App iOS
-
-1. Apri la cartella `ios/` in **Xcode**.
-2. Collega il tuo iPhone o avvia il Simulator.
-3. Seleziona il tuo **Team di sviluppo personale** (Free Apple Developer Account).
-4. Compila ed esegui sull'iPhone.
-5. In **Settings** nell'app:
-   - Inserisci l'indirizzo del server (es. `http://srv-01:8080` o via IP Tailscale `http://100.x.y.z:8080`).
-   - Inserisci il token API configurato nel backend.
-   - Premi **Test Connection** per verificare la connessione.
 
 ---
 
-## 🔒 Sicurezza e Best Practices
+### 2. Configurare ed Eseguire l'App iOS
 
-1. **Nessuna porta esposta su Internet**: Comunica con il server esclusivamente tramite la tua rete privata **Tailscale** o WireGuard.
-2. **Docker Socket protetto**: Il socket Docker non viene mai esposto direttamente all'esterno; tutte le operazioni passano attraverso l'agent Go con autenticazione via Bearer token / API key.
-3. **Credenziali sicure**: I token di autenticazione sull'iPhone sono salvati nell'iOS Keychain con protezione biometrica Face ID / Touch ID.
+1. Apri la cartella `ios/` in **Xcode** (oppure apri `ios/ServerDeck.xcodeproj`).
+2. Collega il tuo iPhone o seleziona un simulatore iOS 17+.
+3. Seleziona il tuo **Team di sviluppo personale** in *Signing & Capabilities*.
+4. Compila ed esegui sull'iPhone (`Cmd + R`).
+5. All'interno dell'app, recati in **Impostazioni**:
+   - **URL Rete Locale (LAN):** `http://<IP_LOCALE>:8080` (es. `http://10.0.0.99:8080`)
+   - **URL Remoto (Tailscale):** `http://<IP_TAILSCALE>:8080` (es. `http://100.x.y.z:8080`)
+   - **API Token:** Il token configurato nel file `.env`
+   - Premi **Test Connection** per verificare la rotta attiva e la latenza in millisecondi.
+
+---
+
+## 📄 Licenza
+
+Distribuito sotto licenza **MIT**. Consulta il file [`LICENSE`](LICENSE) per ulteriori informazioni.
