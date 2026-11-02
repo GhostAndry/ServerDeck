@@ -63,19 +63,138 @@ esac
 
 echo -e "${GREEN}✓ Host System:${NC} Linux ($TARGET_ARCH)"
 
-# 3. Check / Install Docker
-if ! command -v docker &>/dev/null; then
-    echo -e "${YELLOW}[!] Docker not found. Installing Docker Engine via official script...${NC}"
-    curl -fsSL https://get.docker.com | sh
-    systemctl enable --now docker
-fi
-echo -e "${GREEN}✓ Docker Engine:${NC} $(docker --version)"
+# 3. Check Dependencies & Package Manager
+MISSING_DEPS=()
 
-# Check Docker Compose
-if ! docker compose version &>/dev/null; then
-    echo -e "${RED}[ERROR] Docker Compose plugin (v2) is required. Please install 'docker-compose-plugin'.${NC}"
+if ! command -v systemctl &>/dev/null; then
+    echo -e "${RED}[ERROR] systemd is required to manage the ServerDeck host bridge daemon.${NC}"
     exit 1
 fi
+
+if ! command -v curl &>/dev/null; then
+    MISSING_DEPS+=("curl")
+fi
+
+if ! command -v git &>/dev/null; then
+    MISSING_DEPS+=("git")
+fi
+
+if ! command -v docker &>/dev/null; then
+    MISSING_DEPS+=("docker")
+fi
+
+if command -v docker &>/dev/null && ! docker compose version &>/dev/null; then
+    MISSING_DEPS+=("docker-compose-plugin")
+fi
+
+# Detect package manager
+PKG_MGR="unknown"
+if command -v apt-get &>/dev/null; then
+    PKG_MGR="apt"
+elif command -v dnf &>/dev/null; then
+    PKG_MGR="dnf"
+elif command -v yum &>/dev/null; then
+    PKG_MGR="yum"
+elif command -v pacman &>/dev/null; then
+    PKG_MGR="pacman"
+elif command -v zypper &>/dev/null; then
+    PKG_MGR="zypper"
+fi
+
+if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
+    echo ""
+    echo -e "${YELLOW}${BOLD}[!] Rilevate dipendenze mancanti:${NC}"
+    for dep in "${MISSING_DEPS[@]}"; do
+        echo -e "    • ${RED}${BOLD}$dep${NC}"
+    done
+    echo ""
+    echo -e "${BOLD}Come desideri procedere?${NC}"
+    echo -e "  ${GREEN}1)${NC} Installa automaticamente con questo script [Consigliato]"
+    echo -e "  ${YELLOW}2)${NC} Installa manualmente e riesegui lo script in seguito"
+    echo ""
+
+    # Read from /dev/tty if stdin is piped (e.g. curl ... | sudo bash)
+    CHOICE="1"
+    if [ -t 0 ]; then
+        read -r -p "Seleziona un'opzione [1/2] (default 1): " USER_INPUT || USER_INPUT="1"
+        CHOICE="${USER_INPUT:-1}"
+    elif [ -r /dev/tty ]; then
+        read -r -p "Seleziona un'opzione [1/2] (default 1): " USER_INPUT < /dev/tty || USER_INPUT="1"
+        CHOICE="${USER_INPUT:-1}"
+    fi
+
+    if [ "$CHOICE" = "2" ]; then
+        echo ""
+        echo -e "${CYAN}==========================================================${NC}"
+        echo -e "${BOLD}Istruzioni per l'installazione manuale (${PKG_MGR}):${NC}"
+        echo -e "${CYAN}==========================================================${NC}"
+        case "$PKG_MGR" in
+            apt)
+                echo "1. Installa utilità di base:"
+                echo "   sudo apt-get update && sudo apt-get install -y curl git"
+                echo "2. Installa Docker Engine e Docker Compose:"
+                echo "   curl -fsSL https://get.docker.com | sudo sh"
+                echo "   sudo systemctl enable --now docker"
+                ;;
+            dnf|yum)
+                echo "1. Installa utilità di base:"
+                echo "   sudo $PKG_MGR install -y curl git"
+                echo "2. Installa Docker Engine e Docker Compose:"
+                echo "   curl -fsSL https://get.docker.com | sudo sh"
+                echo "   sudo systemctl enable --now docker"
+                ;;
+            pacman)
+                echo "1. Installa utilità e Docker:"
+                echo "   sudo pacman -Sy --noconfirm curl git docker docker-compose"
+                echo "   sudo systemctl enable --now docker"
+                ;;
+            *)
+                echo "Installa i pacchetti mancanti (${MISSING_DEPS[*]}) con il gestore pacchetti del tuo sistema."
+                echo "Poi avvia Docker con: sudo systemctl enable --now docker"
+                ;;
+        esac
+        echo ""
+        echo -e "${YELLOW}Una volta completata l'installazione manuale, riesegui semplicemente:${NC}"
+        echo "  curl -sSL https://raw.githubusercontent.com/GhostAndry/ServerDeck/main/scripts/install.sh | sudo bash"
+        echo -e "${CYAN}==========================================================${NC}"
+        exit 0
+    else
+        echo -e "${BLUE}==> Installazione automatica delle dipendenze in corso...${NC}"
+        
+        NEED_APT_UPDATE=1
+        for dep in "${MISSING_DEPS[@]}"; do
+            if [ "$dep" = "curl" ] || [ "$dep" = "git" ]; then
+                case "$PKG_MGR" in
+                    apt)
+                        if [ "$NEED_APT_UPDATE" -eq 1 ]; then
+                            apt-get update -y
+                            NEED_APT_UPDATE=0
+                        fi
+                        apt-get install -y "$dep"
+                        ;;
+                    dnf|yum)
+                        $PKG_MGR install -y "$dep"
+                        ;;
+                    pacman)
+                        pacman -Sy --noconfirm "$dep"
+                        ;;
+                    zypper)
+                        zypper install -y "$dep"
+                        ;;
+                esac
+            fi
+        done
+
+        if [[ " ${MISSING_DEPS[*]} " =~ " docker " ]] || [[ " ${MISSING_DEPS[*]} " =~ " docker-compose-plugin " ]]; then
+            echo -e "${BLUE}==> Installazione di Docker Engine & Compose tramite script ufficiale...${NC}"
+            curl -fsSL https://get.docker.com | sh
+            systemctl enable --now docker
+        fi
+        echo -e "${GREEN}✓ Tutte le dipendenze sono state installate con successo!${NC}"
+    fi
+fi
+
+echo -e "${GREEN}✓ Docker Engine:${NC} $(docker --version 2>/dev/null || echo 'OK')"
 echo -e "${GREEN}✓ Docker Compose:${NC} $(docker compose version --short 2>/dev/null || echo 'OK')"
 
 # 4. Directory & Configuration Setup
