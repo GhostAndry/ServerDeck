@@ -7,6 +7,37 @@ public enum KeychainService {
     private static let serverURLAccount = "server_url"
     private static let localURLAccount = "local_url"
     private static let tailscaleURLAccount = "tailscale_url"
+    private static let serversAccount = "servers_json"
+    private static let activeServerAccount = "active_server_id"
+
+    // MARK: - Multi-Server Storage
+    public static func saveServers(_ servers: [ServerConfig]) -> Bool {
+        guard let data = try? JSONEncoder().encode(servers),
+              let jsonStr = String(data: data, encoding: .utf8) else {
+            return false
+        }
+        return save(key: serversAccount, value: jsonStr)
+    }
+
+    public static func getServers() -> [ServerConfig]? {
+        guard let jsonStr = load(key: serversAccount),
+              let data = jsonStr.data(using: .utf8),
+              let servers = try? JSONDecoder().decode([ServerConfig].self, from: data) else {
+            return nil
+        }
+        return servers
+    }
+
+    public static func saveActiveServerId(_ id: UUID) -> Bool {
+        save(key: activeServerAccount, value: id.uuidString)
+    }
+
+    public static func getActiveServerId() -> UUID? {
+        guard let str = load(key: activeServerAccount), let uuid = UUID(uuidString: str) else {
+            return nil
+        }
+        return uuid
+    }
 
     // MARK: - API Token
     public static func saveToken(_ token: String) -> Bool {

@@ -37,6 +37,7 @@
 		8F5C64D547EE7984F4F76629 /* WebSocketEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90F8EEC4799F8DE2CDE71EA /* WebSocketEvent.swift */; };
 		914388C489C6F7558E7F0CE3 /* NetworkMetricCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CD5106E26EE174C068250A4 /* NetworkMetricCard.swift */; };
 		A4D03A3B8D02BEC7B96CB11A /* ServicesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B64C8825B14E71473CAAE58D /* ServicesViewModel.swift */; };
+		A8BEBEB56721412C6DCA696C /* ServerEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DA228ACE2BAA36950F70090 /* ServerEditorSheet.swift */; };
 		AD62A8FD120308D6D68C8974 /* NetworkStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B772178D5CD14BF9F136B5A /* NetworkStats.swift */; };
 		B60592DD42D63D03C68C2E2D /* BiometricAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD19E2B96364D5D97C807E54 /* BiometricAuthService.swift */; };
 		B6A57BAEAF8D3330C172FCA1 /* ViewExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A376C45CC3D389BD384BD9D8 /* ViewExtensions.swift */; };
@@ -101,6 +102,7 @@
 		92E82D5A19AA53D43D1C1954 /* MemoryStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryStats.swift; sourceTree = "<group>"; };
 		978E45B7DE718377369E8352 /* AddServiceSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddServiceSheet.swift; sourceTree = "<group>"; };
 		9D65333C15D0F3411990EAF7 /* ContainerDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerDetailViewModel.swift; sourceTree = "<group>"; };
+		9DA228ACE2BAA36950F70090 /* ServerEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerEditorSheet.swift; sourceTree = "<group>"; };
 		A376C45CC3D389BD384BD9D8 /* ViewExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewExtensions.swift; sourceTree = "<group>"; };
 		A9E7214AB5AA8F7B08A69758 /* BiometricsLockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricsLockView.swift; sourceTree = "<group>"; };
 		AD89B94DA28BDDBE8E34C8B1 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
@@ -133,6 +135,7 @@
 			isa = PBXGroup;
 			children = (
 				A9E7214AB5AA8F7B08A69758 /* BiometricsLockView.swift */,
+				9DA228ACE2BAA36950F70090 /* ServerEditorSheet.swift */,
 				F2CED55734769C35C83A0CEB /* SettingsView.swift */,
 				284FB1739B963340AA2FDD65 /* TailscaleGuideView.swift */,
 			);
@@ -434,6 +437,7 @@
 				E339D3098C9825812C103D74 /* QuickActionsSheet.swift in Sources */,
 				2BD8CE7DA4FBB38BAB8F0C5B /* ServerConfig.swift in Sources */,
 				D20EFDFED941EE97D888E7F7 /* ServerDeckApp.swift in Sources */,
+				A8BEBEB56721412C6DCA696C /* ServerEditorSheet.swift in Sources */,
 				783E02921D1961A7194AB70A /* ServiceCardView.swift in Sources */,
 				F5955C1811EC574ADD8022D1 /* ServiceItem.swift in Sources */,
 				67AE534AF32A16CCC5CF8044 /* ServicesView.swift in Sources */,

@@ -4,6 +4,7 @@ public struct OverviewView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel: OverviewViewModel
     @State private var showTerminal = false
+    @State private var showAddServerSheet = false
 
     public init(apiClient: APIClient, webSocketManager: WebSocketManager) {
         _viewModel = StateObject(wrappedValue: OverviewViewModel(apiClient: apiClient, webSocketManager: webSocketManager))
@@ -133,6 +134,48 @@ public struct OverviewView: View {
             .navigationTitle("ServerDeck")
             .navigationTitleModeLarge()
             .toolbar {
+                ToolbarItem(placement: .navigation) {
+                    Menu {
+                        ForEach(appState.servers) { server in
+                            Button {
+                                appState.switchServer(to: server.id)
+                            } label: {
+                                HStack {
+                                    Text(server.name)
+                                    if server.id == appState.activeServerId {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+
+                        Divider()
+
+                        Button {
+                            showAddServerSheet = true
+                            HapticManager.light()
+                        } label: {
+                            Label("Aggiungi Server...", systemImage: "plus.circle")
+                        }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "server.rack")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.accentColor)
+                            Text(appState.config.name)
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.primary)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.primary.opacity(0.06))
+                        .cornerRadius(8)
+                    }
+                }
+
                 ToolbarItem(placement: .trailingAction) {
                     Button {
                         appState.showQuickActions = true
@@ -146,6 +189,14 @@ public struct OverviewView: View {
             }
             .sheet(isPresented: $showTerminal) {
                 HostTerminalSheet(apiClient: appState.apiClient)
+            }
+            .sheet(isPresented: $showAddServerSheet) {
+                ServerEditorSheet()
+            }
+            .onChange(of: appState.activeServerId) {
+                Task {
+                    await viewModel.loadOverview()
+                }
             }
             .refreshable {
                 await viewModel.loadOverview(showLoadingIndicator: false)

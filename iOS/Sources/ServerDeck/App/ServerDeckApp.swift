@@ -26,10 +26,10 @@ public struct ServerDeckApp: App {
                 }
             }
             .environmentObject(appState)
-            .onChange(of: scenePhase) { oldPhase, newPhase in
-                if newPhase == .background {
-                    appState.lock()
-                } else if newPhase == .active && !appState.isUnlocked {
+            .onChange(of: scenePhase) {
+                if scenePhase == .background {
+                    appState.lockApp()
+                } else if scenePhase == .active && !appState.isUnlocked {
                     Task {
                         await appState.authenticateWithBiometrics()
                     }

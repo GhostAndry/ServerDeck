@@ -100,43 +100,34 @@ ServerDeck/
 
 ## ⚡ Quick Start
 
-### 1. Avviare il Bridge Rust e il Backend Docker (su Linux / Debian)
+### 1. Installazione Host in 1 Click (Script automatico)
+
+Su qualsiasi macchina Linux (Debian, Ubuntu, Arch, ecc.) puoi installare sia il **daemon nativo Rust** sia il **container Docker non privilegiato** con un unico comando:
 
 ```bash
-# 1. Clona la repository sul tuo server
-git clone https://github.com/GhostAndry/ServerDeck.git /mnt/DATA/serverdeck
-cd /mnt/DATA/serverdeck
-
-# 2. Compila e installa il bridge host nativo (Rust)
-docker run --rm -v $(pwd)/bridge:/src -w /src rust:alpine cargo build --release
-sudo bash scripts/install-bridge.sh
-
-# 3. Configura le variabili d'ambiente (.env)
-cat << 'EOF' > .env
-SERVERDECK_TOKEN=tuo-token-segreto-2026
-EOF
-
-# 4. Avvia il container del backend
-docker compose up -d --build
+curl -sSL https://raw.githubusercontent.com/GhostAndry/ServerDeck/main/scripts/install.sh | sudo bash
 ```
 
-Verifica che il backend risponda correttamente:
+Lo script rileverà automaticamente l'architettura (`x86_64` o `arm64`), installerà Docker se assente, compilerà il bridge Rust come servizio di sistema `serverdeck-bridge.service`, avvierà il container backend e genererà il token sicuro stampando a schermo l'IP locale e Tailscale.
+
+Oppure puoi passare un token o una porta personalizzata al volo:
 ```bash
-curl http://localhost:8080/healthz
-# {"mock":false,"status":"ok","version":"1.0.0"}
+curl -sSL https://raw.githubusercontent.com/GhostAndry/ServerDeck/main/scripts/install.sh | sudo SERVERDECK_TOKEN=mio-token-segreto SERVERDECK_PORT=8080 bash
 ```
 
 ---
 
-### 2. Configurare ed Eseguire l'App iOS
+### 2. Configurare l'App iOS (Multi-Server)
 
 1. Apri la cartella `ios/` in **Xcode** (oppure apri `ios/ServerDeck.xcodeproj`).
 2. Collega il tuo iPhone o seleziona un simulatore iOS 17+.
 3. Seleziona il tuo **Team di sviluppo personale** in *Signing & Capabilities*.
 4. Compila ed esegui sull'iPhone (`Cmd + R`).
-5. All'interno dell'app, recati in **Impostazioni**:
-   - **URL Rete Locale (LAN):** `http://<IP_LOCALE>:8080` (es. `http://10.0.0.99:8080`)
-   - **URL Remoto (Tailscale):** `http://<IP_TAILSCALE>:8080` (es. `http://100.x.y.z:8080`)
+5. **Aggiunta e Gestione Server:**
+   - Tocca il nome del server in alto nella barra principale per aprire il **selettore rapido**, oppure vai in **Impostazioni** > **I Miei Server**.
+   - Tocca **"Aggiungi Nuovo Server"** per configurare tutti i tuoi server o VPS (es. `srv-01`, `homelab-vps`, `pi-cluster`).
+   - Inserisci il nome, l'IP locale (LAN), l'IP Tailscale/remoto e il token API.
+   - Puoi verificare istantaneamente la rotta con il pulsante **"Test Connessione"** e passare da un server all'altro con un tocco!
    - **API Token:** Il token configurato nel file `.env`
    - Premi **Test Connection** per verificare la rotta attiva e la latenza in millisecondi.
 

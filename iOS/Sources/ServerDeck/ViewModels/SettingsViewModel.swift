@@ -3,6 +3,7 @@ import Combine
 
 @MainActor
 public final class SettingsViewModel: ObservableObject {
+    @Published public var name: String = "srv-01"
     @Published public var localURL: String = ""
     @Published public var tailscaleURL: String = ""
     @Published public var serverURL: String = ""
@@ -18,13 +19,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var hasSavedSuccessfully: Bool = false
 
     public init(config: ServerConfig) {
-        self.localURL = config.localURL
-        self.tailscaleURL = config.tailscaleURL
-        self.serverURL = config.url
-        self.token = config.token
-        self.allowInsecureSSL = config.allowInsecureSSL
-        self.useMockData = config.useMockData
-        self.requireBiometrics = config.requireBiometrics
+        syncWithConfig(config)
 
         Task {
             let bioType = await BiometricAuthService.shared.biometricType()
@@ -34,6 +29,19 @@ public final class SettingsViewModel: ObservableObject {
         }
     }
 
+    public func syncWithConfig(_ config: ServerConfig) {
+        self.name = config.name
+        self.localURL = config.localURL
+        self.tailscaleURL = config.tailscaleURL
+        self.serverURL = config.url
+        self.token = config.token
+        self.allowInsecureSSL = config.allowInsecureSSL
+        self.useMockData = config.useMockData
+        self.requireBiometrics = config.requireBiometrics
+        self.testStatusMessage = nil
+        self.testSucceeded = nil
+    }
+
     public func testConnection() async {
         isTestingConnection = true
         testStatusMessage = nil
@@ -41,6 +49,7 @@ public final class SettingsViewModel: ObservableObject {
         HapticManager.light()
 
         let testConfig = ServerConfig(
+            name: name,
             localURL: localURL,
             tailscaleURL: tailscaleURL,
             token: token,
@@ -60,7 +69,7 @@ public final class SettingsViewModel: ObservableObject {
             }
         } catch {
             testSucceeded = false
-            testStatusMessage = "Failed: \(error.localizedDescription)"
+            testStatusMessage = "Fallito: \(error.localizedDescription)"
             HapticManager.error()
         }
 
@@ -68,15 +77,16 @@ public final class SettingsViewModel: ObservableObject {
     }
 
     public func save(appState: AppState) {
-        let updated = ServerConfig(
-            localURL: localURL,
-            tailscaleURL: tailscaleURL,
-            token: token,
-            allowInsecureSSL: allowInsecureSSL,
-            useMockData: useMockData,
-            requireBiometrics: requireBiometrics
-        )
-        appState.updateConfig(updated)
+        var current = appState.config
+        current.name = name.trimmingCharacters(in: .whitespaces).isEmpty ? "srv-01" : name.trimmingCharacters(in: .whitespaces)
+        current.localURL = localURL.trimmingCharacters(in: .whitespaces)
+        current.tailscaleURL = tailscaleURL.trimmingCharacters(in: .whitespaces)
+        current.token = token.trimmingCharacters(in: .whitespaces)
+        current.allowInsecureSSL = allowInsecureSSL
+        current.useMockData = useMockData
+        current.requireBiometrics = requireBiometrics
+
+        appState.updateConfig(current)
         hasSavedSuccessfully = true
         HapticManager.success()
 

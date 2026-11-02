@@ -1,6 +1,8 @@
 import Foundation
 
-public struct ServerConfig: Codable, Sendable, Hashable {
+public struct ServerConfig: Codable, Sendable, Hashable, Identifiable {
+    public var id: UUID
+    public var name: String
     public var localURL: String
     public var tailscaleURL: String
     public var token: String
@@ -9,6 +11,8 @@ public struct ServerConfig: Codable, Sendable, Hashable {
     public var requireBiometrics: Bool
 
     public init(
+        id: UUID = UUID(),
+        name: String = "srv-01",
         localURL: String = "http://10.0.0.99:8080",
         tailscaleURL: String = "http://100.75.107.88:8080",
         token: String = "serverdeck-secret-2026",
@@ -16,6 +20,8 @@ public struct ServerConfig: Codable, Sendable, Hashable {
         useMockData: Bool = false,
         requireBiometrics: Bool = false
     ) {
+        self.id = id
+        self.name = name
         self.localURL = localURL
         self.tailscaleURL = tailscaleURL
         self.token = token
@@ -81,6 +87,8 @@ public struct ServerConfig: Codable, Sendable, Hashable {
 
     // MARK: - Codable
     enum CodingKeys: String, CodingKey {
+        case id
+        case name
         case localURL = "local_url"
         case tailscaleURL = "tailscale_url"
         case legacyURL = "url"
@@ -92,6 +100,8 @@ public struct ServerConfig: Codable, Sendable, Hashable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        self.name = try container.decodeIfPresent(String.self, forKey: .name) ?? "srv-01"
         let legacy = try container.decodeIfPresent(String.self, forKey: .legacyURL)
         let local = try container.decodeIfPresent(String.self, forKey: .localURL)
         let tailscale = try container.decodeIfPresent(String.self, forKey: .tailscaleURL)
@@ -106,6 +116,8 @@ public struct ServerConfig: Codable, Sendable, Hashable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
         try container.encode(localURL, forKey: .localURL)
         try container.encode(tailscaleURL, forKey: .tailscaleURL)
         try container.encode(localURL, forKey: .legacyURL)

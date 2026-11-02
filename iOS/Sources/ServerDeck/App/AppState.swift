@@ -3,7 +3,8 @@ import Combine
 
 @MainActor
 public final class AppState: ObservableObject {
-    @Published public var config: ServerConfig
+    @Published public var servers: [ServerConfig] = []
+    @Published public var activeServerId: UUID
     @Published public var isUnlocked: Bool = true
     @Published public var showQuickActions: Bool = false
     @Published public var selectedTab: Int = 0
@@ -11,88 +12,155 @@ public final class AppState: ObservableObject {
     public let apiClient: APIClient
     public let webSocketManager: WebSocketManager
 
-    private let userDefaultsLocalURLKey = "serverdeck_local_url"
-    private let userDefaultsTailscaleURLKey = "serverdeck_tailscale_url"
-    private let userDefaultsURLKey = "serverdeck_server_url"
-    private let userDefaultsInsecureSSLKey = "serverdeck_allow_insecure_ssl"
-    private let userDefaultsMockDataKey = "serverdeck_use_mock_data"
-    private let userDefaultsBiometricsKey = "serverdeck_require_biometrics"
+    private let userDefaultsServersKey = "serverdeck_servers_list"
+    private let userDefaultsActiveIdKey = "serverdeck_active_server_id"
+
+    public var config: ServerConfig {
+        get {
+            servers.first(where: { $0.id == activeServerId }) ?? servers.first ?? ServerConfig()
+        }
+        set {
+            updateConfig(newValue)
+        }
+    }
 
     public init() {
-        // Load settings from Keychain & UserDefaults
-        var savedToken = KeychainService.getToken() ?? ""
-        if savedToken.trimmingCharacters(in: .whitespaces).isEmpty {
-            savedToken = "serverdeck-secret-2026"
-            _ = KeychainService.saveToken(savedToken)
+        // 1. Load multi-server list from Keychain or UserDefaults
+        var loadedServers = KeychainService.getServers()
+        if loadedServers == nil || loadedServers?.isEmpty == true {
+            // Check legacy UserDefaults fallback
+            if let data = UserDefaults.standard.data(forKey: "serverdeck_servers_list"),
+               let decoded = try? JSONDecoder().decode([ServerConfig].self, from: data), !decoded.isEmpty {
+                loadedServers = decoded
+            }
         }
 
-        var savedLocal = KeychainService.getLocalURL() ?? UserDefaults.standard.string(forKey: "serverdeck_local_url") ?? ""
-        if savedLocal.trimmingCharacters(in: .whitespaces).isEmpty || savedLocal.contains("tailscale-net") {
-            savedLocal = "http://10.0.0.99:8080"
-            _ = KeychainService.saveLocalURL(savedLocal)
+        // 2. If no servers exist yet, initialize with default server srv-01
+        if loadedServers == nil || loadedServers?.isEmpty == true {
+            var savedToken = KeychainService.getToken() ?? ""
+            if savedToken.trimmingCharacters(in: .whitespaces).isEmpty {
+                savedToken = "serverdeck-secret-2026"
+                _ = KeychainService.saveToken(savedToken)
+            }
+
+            var savedLocal = KeychainService.getLocalURL() ?? ""
+            if savedLocal.trimmingCharacters(in: .whitespaces).isEmpty || savedLocal.contains("tailscale-net") {
+                savedLocal = "http://10.0.0.99:8080"
+                _ = KeychainService.saveLocalURL(savedLocal)
+            }
+
+            var savedTailscale = KeychainService.getTailscaleURL() ?? ""
+            if savedTailscale.trimmingCharacters(in: .whitespaces).isEmpty || savedTailscale.contains("tailscale-net") {
+                savedTailscale = "http://100.75.107.88:8080"
+                _ = KeychainService.saveTailscaleURL(savedTailscale)
+            }
+
+            let initialServer = ServerConfig(
+                id: UUID(),
+                name: "srv-01",
+                localURL: savedLocal,
+                tailscaleURL: savedTailscale,
+                token: savedToken,
+                allowInsecureSSL: true,
+                useMockData: false,
+                requireBiometrics: false
+            )
+
+            loadedServers = [initialServer]
+            _ = KeychainService.saveServers([initialServer])
         }
 
-        var savedTailscale = KeychainService.getTailscaleURL() ?? UserDefaults.standard.string(forKey: "serverdeck_tailscale_url") ?? ""
-        if savedTailscale.trimmingCharacters(in: .whitespaces).isEmpty || savedTailscale.contains("tailscale-net") {
-            savedTailscale = "http://100.75.107.88:8080"
-            _ = KeychainService.saveTailscaleURL(savedTailscale)
+        let initialList = loadedServers ?? []
+        self.servers = initialList
+
+        // 3. Determine active server ID
+        let savedActiveId = KeychainService.getActiveServerId()
+        let activeId: UUID
+        if let savedActiveId = savedActiveId, initialList.contains(where: { $0.id == savedActiveId }) {
+            activeId = savedActiveId
+        } else {
+            activeId = initialList.first?.id ?? UUID()
         }
 
-        let allowInsecure = UserDefaults.standard.object(forKey: "serverdeck_allow_insecure_ssl") as? Bool ?? true
-        let useMock = UserDefaults.standard.object(forKey: "serverdeck_use_mock_data") as? Bool ?? false
-        let requireBiometrics = UserDefaults.standard.bool(forKey: "serverdeck_require_biometrics")
+        self.activeServerId = activeId
 
-        let initialConfig = ServerConfig(
-            localURL: savedLocal,
-            tailscaleURL: savedTailscale,
-            token: savedToken,
-            allowInsecureSSL: allowInsecure,
-            useMockData: useMock,
-            requireBiometrics: requireBiometrics
-        )
+        let currentActive = initialList.first(where: { $0.id == activeId }) ?? initialList.first ?? ServerConfig()
 
-        self.config = initialConfig
-        self.apiClient = APIClient(config: initialConfig)
-        self.webSocketManager = WebSocketManager(config: initialConfig)
+        self.apiClient = APIClient(config: currentActive)
+        self.webSocketManager = WebSocketManager(config: currentActive)
 
-        if requireBiometrics {
+        if currentActive.requireBiometrics {
             self.isUnlocked = false
         } else {
             self.isUnlocked = true
         }
 
-        // Resolve active endpoint (LAN vs Tailscale) and connect WebSocket
+        // Fast endpoint resolution and WS connect
         Task {
             let activeURL = await apiClient.resolveActiveBaseURL()
             webSocketManager.connect(preferredURL: activeURL)
         }
     }
 
-    public func updateConfig(_ newConfig: ServerConfig) {
-        self.config = newConfig
+    // MARK: - Multi-Server Management
 
-        // Persist token in Keychain
-        if !newConfig.token.isEmpty {
-            _ = KeychainService.saveToken(newConfig.token)
-        } else {
-            _ = KeychainService.deleteToken()
-        }
+    public func switchServer(to id: UUID) {
+        guard let target = servers.first(where: { $0.id == id }) else { return }
+        self.activeServerId = id
+        _ = KeychainService.saveActiveServerId(id)
 
-        // Persist URLs in Keychain & UserDefaults
-        _ = KeychainService.saveLocalURL(newConfig.localURL)
-        _ = KeychainService.saveTailscaleURL(newConfig.tailscaleURL)
-        _ = KeychainService.saveServerURL(newConfig.localURL)
+        UserDefaults.standard.set(id.uuidString, forKey: userDefaultsActiveIdKey)
 
-        UserDefaults.standard.set(newConfig.localURL, forKey: userDefaultsLocalURLKey)
-        UserDefaults.standard.set(newConfig.tailscaleURL, forKey: userDefaultsTailscaleURLKey)
-        UserDefaults.standard.set(newConfig.url, forKey: userDefaultsURLKey)
-        UserDefaults.standard.set(newConfig.allowInsecureSSL, forKey: userDefaultsInsecureSSLKey)
-        UserDefaults.standard.set(newConfig.useMockData, forKey: userDefaultsMockDataKey)
-        UserDefaults.standard.set(newConfig.requireBiometrics, forKey: userDefaultsBiometricsKey)
+        HapticManager.selection()
 
         Task {
-            await apiClient.updateConfig(newConfig)
-            webSocketManager.updateConfig(newConfig)
+            await apiClient.updateConfig(target)
+            let activeURL = await apiClient.resolveActiveBaseURL()
+            webSocketManager.updateConfig(target)
+            webSocketManager.connect(preferredURL: activeURL)
+        }
+    }
+
+    public func addServer(_ newServer: ServerConfig) {
+        servers.append(newServer)
+        persistServers()
+        switchServer(to: newServer.id)
+    }
+
+    public func updateConfig(_ newConfig: ServerConfig) {
+        if let idx = servers.firstIndex(where: { $0.id == newConfig.id }) {
+            servers[idx] = newConfig
+        } else {
+            servers.append(newConfig)
+        }
+        persistServers()
+
+        if activeServerId == newConfig.id {
+            Task {
+                await apiClient.updateConfig(newConfig)
+                let activeURL = await apiClient.resolveActiveBaseURL()
+                webSocketManager.updateConfig(newConfig)
+                webSocketManager.connect(preferredURL: activeURL)
+            }
+        }
+    }
+
+    public func deleteServer(id: UUID) {
+        guard servers.count > 1 else { return } // Keep at least one server configured
+        servers.removeAll { $0.id == id }
+        persistServers()
+
+        if activeServerId == id {
+            if let next = servers.first {
+                switchServer(to: next.id)
+            }
+        }
+    }
+
+    private func persistServers() {
+        _ = KeychainService.saveServers(servers)
+        if let data = try? JSONEncoder().encode(servers) {
+            UserDefaults.standard.set(data, forKey: userDefaultsServersKey)
         }
     }
 
@@ -102,16 +170,16 @@ public final class AppState: ObservableObject {
             return
         }
 
-        let success = await BiometricAuthService.shared.authenticate(reason: "Authenticate to access ServerDeck")
-        if success {
-            isUnlocked = true
-            HapticManager.success()
-        } else {
-            HapticManager.error()
+        let success = await BiometricAuthService.shared.authenticate(
+            reason: "Sblocca ServerDeck per gestire il tuo homelab."
+        )
+
+        await MainActor.run {
+            self.isUnlocked = success
         }
     }
 
-    public func lock() {
+    public func lockApp() {
         if config.requireBiometrics {
             isUnlocked = false
         }
