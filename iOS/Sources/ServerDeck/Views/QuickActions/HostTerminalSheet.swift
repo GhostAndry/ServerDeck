@@ -7,7 +7,7 @@ public struct HostTerminalSheet: View {
     @Environment(\.dismiss) private var dismiss
     let apiClient: APIClient
 
-    @State private var commandInput: String = "uptime"
+    @State private var commandInput: String = ""
     @State private var history: [ExecResult] = []
     @State private var isExecuting: Bool = false
     @State private var errorMessage: String?
@@ -34,7 +34,6 @@ public struct HostTerminalSheet: View {
                     HStack(spacing: 8) {
                         ForEach(shortcutCommands, id: \.self) { cmd in
                             Button {
-                                commandInput = cmd
                                 HapticManager.selection()
                                 executeCommand(cmd)
                             } label: {
@@ -150,9 +149,10 @@ public struct HostTerminalSheet: View {
 
                     TextField("Comando shell (es. uptime, sensors)", text: $commandInput)
                         .font(.system(size: 14, design: .monospaced))
-                        .autocorrectionDisabled()
+                        .autocorrectionDisabled(true)
                         #if os(iOS)
                         .textInputAutocapitalization(.never)
+                        .keyboardType(.asciiCapable)
                         #endif
                         .onSubmit {
                             executeCommand(commandInput)
@@ -200,6 +200,9 @@ public struct HostTerminalSheet: View {
     private func executeCommand(_ raw: String) {
         let trimmed = raw.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty, !isExecuting else { return }
+
+        // Clear input line immediately
+        commandInput = ""
 
         isExecuting = true
         errorMessage = nil
